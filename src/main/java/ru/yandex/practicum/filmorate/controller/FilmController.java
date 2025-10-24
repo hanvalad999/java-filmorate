@@ -16,7 +16,6 @@ import java.util.Map;
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
-
     private final Map<Long, Film> films = new HashMap<>();
 
     @GetMapping
