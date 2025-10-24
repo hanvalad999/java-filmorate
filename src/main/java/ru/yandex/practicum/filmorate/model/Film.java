@@ -4,14 +4,17 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDate;
 
 /**
  * Film.
  */
-@Data
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode(of = "id")
 public class Film {
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
 

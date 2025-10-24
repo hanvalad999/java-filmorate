@@ -6,14 +6,14 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/films")
 @Slf4j
 public class FilmController {
-    private final Map<Long, Film> films = new HashMap<>();
+    private final Map<Long, Film> films = new ConcurrentHashMap<>();
 
     @GetMapping
     public Collection<Film> findFilms() {
@@ -36,7 +36,7 @@ public class FilmController {
     public Film updateFilms(@RequestBody Film film) {
         log.info("Попытка обновить фильм: {}", film);
 
-        if (film.getId() == null || !films.containsKey(film.getId())) {
+        if (!existsFilm(film)) {
             log.warn("Обновление не удалось: фильм с id={} не найден", film.getId());
             throw new ValidationException("Фильм с таким ID не найден для обновления");
         }
@@ -45,6 +45,10 @@ public class FilmController {
 
         log.info("Фильм успешно обновлён: id={}, name='{}'", film.getId(), film.getName());
         return film;
+    }
+
+    private boolean existsFilm(Film film) {
+        return film != null && film.getId() != null && films.containsKey(film.getId());
     }
 
     private long getNextId() {
