@@ -61,7 +61,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         if (film.getReleaseDate().isBefore(LocalDate.parse("1895-12-28"))
                 || film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ValidationException("Некорректно указана дата релиза.");
-        } if(film.getName().isEmpty()){
+        } if (film.getName().isEmpty()) {
             throw new ValidationException("Некорректно указано название фильма.");
         } if (film.getDescription().length() > 200){
             throw new ValidationException("Превышено количество символов в описании фильма.");
