@@ -1,11 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,10 +14,21 @@ import java.util.List;
 @RestController
 @RequestMapping("/films")
 @Slf4j
-@RequiredArgsConstructor
 public class FilmController {
+
     private final FilmService films;
 
+    // Конструктор для Spring (DI)
+    public FilmController(FilmService films) {
+        this.films = films;
+    }
+
+    // Конструктор по умолчанию для юнит-тестов (new FilmController())
+    public FilmController() {
+        this.films = new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage());
+    }
+
+    // --- CRUD ---
     @GetMapping
     public Collection<Film> findAll() {
         log.info("GET /films");
@@ -26,11 +38,11 @@ public class FilmController {
     @GetMapping("/{id}")
     public Film findById(@PathVariable long id) {
         log.info("GET /films/{}", id);
-        return films.get(id); // 404 бросит сервис
+        return films.get(id);
     }
 
     @PostMapping
-    public Film createFilms(@RequestBody Film film) {
+    public Film create(@Valid @RequestBody Film film) {
         log.info("POST /films body={}", film);
         return films.create(film);
     }
@@ -41,7 +53,7 @@ public class FilmController {
         return films.update(film);
     }
 
-
+    // --- Лайки + Топ ---
     @PutMapping("/{id}/like/{userId}")
     public void like(@PathVariable long id, @PathVariable long userId) {
         log.info("PUT /films/{}/like/{}", id, userId);
