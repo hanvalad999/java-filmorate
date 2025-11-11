@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -13,88 +14,28 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
-    private final UserStorage users;
 
-    public Collection<User> findAll() {
-        return users.findAll();
+    private final UserStorage userStorage;
+
+    public User addFriend(int userId, int friendId) {
+        userStorage.addFriend(userId, friendId);
+        return userStorage.getUserById(userId);
     }
 
-    public User get(long id) {
-        return users.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User with id=" + id + " not found"));
+    public User deleteFriend(int userId, int friendId) {
+        userStorage.deleteFriend(userId, friendId);
+        return userStorage.getUserById(userId);
     }
 
-    public User create(User u) {
-        validateAndNormalize(u, /*isUpdate=*/false);
-        return users.create(u);
+    public List<User> getUserFriends(Integer userId) {
+        return userStorage.getFriendsByUserId(userId);
     }
 
-    public User update(User u) {
-        if (u.getId() == null) {
-            throw new ValidationException("Id обязателен для обновления пользователя");
-        }
-        get(u.getId());
-        validateAndNormalize(u, /*isUpdate=*/true);
-        return users.update(u);
-    }
-
-    public void addFriend(long id, long friendId) {
-        User u = get(id);
-        User f = get(friendId);
-
-        u.getFriends().add(friendId);
-        f.getFriends().add(id);
-    }
-
-    public void removeFriend(long id, long friendId) {
-        User user = get(id);
-        User friend = get(friendId);
-
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(id);
-    }
-
-    public List<User> listFriends(long id) {
-        return get(id).getFriends().stream()
-                .map(this::get)
-                .toList();
-    }
-
-    public List<User> commonFriends(long id, long otherId) {
-        Set<Long> common = new HashSet<>(get(id).getFriends());
-        common.retainAll(get(otherId).getFriends());
-        return common.stream().map(this::get).toList();
-    }
-
-    private void validateAndNormalize(User u, boolean isUpdate) {
-        if (u == null) {
-            throw new ValidationException("Тело пользователя не должно быть пустым");
-        }
-
-        // email — обязателен, не пустой, содержит '@'
-        if (u.getEmail() == null || u.getEmail().isBlank()) {
-            throw new ValidationException("Email не может быть пустым");
-        }
-        if (!u.getEmail().contains("@")) {
-            throw new ValidationException("Некорректный email: отсутствует '@'");
-        }
-
-        // login — обязателен, без пробелов
-        if (u.getLogin() == null || u.getLogin().isBlank() || u.getLogin().contains(" ")) {
-            throw new ValidationException("Логин не может быть пустым и не должен содержать пробелы");
-        }
-
-        // birthday — не в будущем (null допустим, если модель это позволяет)
-        if (u.getBirthday() != null && u.getBirthday().isAfter(java.time.LocalDate.now())) {
-            throw new ValidationException("Дата рождения не может быть в будущем");
-        }
-
-        // name — если пуст, подставляем login
-        if (u.getName() == null || u.getName().isBlank()) {
-            u.setName(u.getLogin());
-        }
+    public List<User> getMutualFriends(int userId, int otherId) {
+        return userStorage.getMutualFriends(userId, otherId);
     }
 
 }

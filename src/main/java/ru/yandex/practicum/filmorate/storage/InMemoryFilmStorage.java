@@ -1,45 +1,71 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
-    private final Map<Long, Film> films = new ConcurrentHashMap<>();
-    private final AtomicLong seq = new AtomicLong(0);
+    private final Map<Integer, Film> films = new ConcurrentHashMap<>();
+    private int idForFilm = 0;
+
+    @Override
+    public List<Film> findAllFilms() {
+        return new ArrayList<>(films.values());
+    }
 
     @Override
     public Film create(Film film) {
-        long id = seq.incrementAndGet();
-        film.setId(id);
-        films.put(id, film);
+        filmValidation(film);
+        film.setLikes(new HashSet<>());
+        film.setId(getIdForFilm());
+        films.put(film.getId(), film);
+        log.info("Поступил запрос на добавление фильма. Фильм добавлен");
         return film;
     }
 
     @Override
     public Film update(Film film) {
-        // предполагаем, что сервис проверил наличие
-        films.put(film.getId(), film);
+        if (films.get(film.getId()) != null) {
+            filmValidation(film);
+            film.setLikes(new HashSet<>());
+            films.put(film.getId(), film);
+            log.info("Поступил запрос на изменения фильма. Фильм изменён.");
+        } else {
+            log.error("Поступил запрос на изменения фильма. Фильм не найден.");
+            throw new NotFoundException("Film not found.");
+        }
         return film;
     }
 
     @Override
-    public Optional<Film> findById(long id) {
-        return Optional.ofNullable(films.get(id));
+    public Film getFilmById(int id) {
+        if (films.containsKey(id)) {
+            return films.get(id);
+        } else throw new NotFoundException("Film not found.");
     }
 
-    @Override
-    public Collection<Film> findAll() {
-        return films.values();
+    private int getIdForFilm() {
+        return ++idForFilm;
     }
 
-    @Override
-    public void deleteById(long id) {
-        films.remove(id);
+    private void filmValidation(Film film) throws ValidationException {
+        if (film.getReleaseDate().isBefore(LocalDate.parse("1895-12-28"))
+                || film.getReleaseDate().isAfter(LocalDate.now())) {
+            throw new ValidationException("Некорректно указана дата релиза.");
+        } if(film.getName().isEmpty()){
+            throw new ValidationException("Некорректно указано название фильма.");
+        } if (film.getDescription().length() > 200){
+            throw new ValidationException("Превышено количество символов в описании фильма.");
+        }
     }
 }
