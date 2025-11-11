@@ -69,11 +69,29 @@ public class UserService {
     }
 
     private void validateAndNormalize(User u, boolean isUpdate) {
-        // Логин не пустой и без пробелов
+        if (u == null) {
+            throw new ValidationException("Тело пользователя не должно быть пустым");
+        }
+
+        // email — обязателен, не пустой, содержит '@'
+        if (u.getEmail() == null || u.getEmail().isBlank()) {
+            throw new ValidationException("Email не может быть пустым");
+        }
+        if (!u.getEmail().contains("@")) {
+            throw new ValidationException("Некорректный email: отсутствует '@'");
+        }
+
+        // login — обязателен, без пробелов
         if (u.getLogin() == null || u.getLogin().isBlank() || u.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может быть пустым и не должен содержать пробелы");
         }
-        // Если name пуст — подставим login
+
+        // birthday — не в будущем (null допустим, если модель это позволяет)
+        if (u.getBirthday() != null && u.getBirthday().isAfter(java.time.LocalDate.now())) {
+            throw new ValidationException("Дата рождения не может быть в будущем");
+        }
+
+        // name — если пуст, подставляем login
         if (u.getName() == null || u.getName().isBlank()) {
             u.setName(u.getLogin());
         }

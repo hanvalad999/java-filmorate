@@ -68,9 +68,29 @@ public class FilmService {
     }
 
     private void validate(Film f, boolean isUpdate) {
-        if (f.getReleaseDate() != null && f.getReleaseDate().isBefore(MIN_DATE)) {
+        if (f == null) {
+            throw new ValidationException("Тело фильма не должно быть пустым");
+        }
+
+        // name — обязательно и непустое
+        if (f.getName() == null || f.getName().isBlank()) {
+            throw new ValidationException("Имя не может быть пустым");
+        }
+
+        // description — не длиннее 200
+        if (f.getDescription() != null && f.getDescription().length() > 200) {
+            throw new ValidationException("Описание не может превышать 200 символов");
+        }
+
+        // releaseDate — обязателен и не раньше 28.12.1895
+        if (f.getReleaseDate() == null) {
+            throw new ValidationException("Дата релиза обязательна");
+        }
+        if (f.getReleaseDate().isBefore(MIN_DATE)) {
             throw new ValidationException("Дата релиза не может быть раньше 28.12.1895");
         }
+
+        // duration — > 0
         if (f.getDuration() <= 0) {
             throw new ValidationException("Продолжительность должна быть положительной");
         }
