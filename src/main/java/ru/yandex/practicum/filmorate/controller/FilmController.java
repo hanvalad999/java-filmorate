@@ -28,6 +28,10 @@ public class FilmController {
         this.films = new FilmService(new InMemoryFilmStorage(), new InMemoryUserStorage());
     }
 
+    public Film createFilms(Film film) {
+        return films.create(film);
+    }
+
     // --- CRUD ---
     @GetMapping
     public Collection<Film> findAll() {

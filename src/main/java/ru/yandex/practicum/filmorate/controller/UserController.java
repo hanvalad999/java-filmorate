@@ -24,20 +24,24 @@ public class UserController {
         this.users = new UserService(new InMemoryUserStorage());
     }
 
+    public User createUsers(User user) {
+        return users.create(user);
+    }
+
     @GetMapping
     public Collection<User> findAll() {
         log.info("GET /users");
         return users.findAll();
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public User findById(@PathVariable long id) {
         log.info("GET /users/{}", id);
         return users.get(id);
     }
 
     @PostMapping
-    public User createUsers(@Valid @RequestBody User user) {
+    public User create(@Valid @RequestBody User user) {
         log.info("POST /users body={}", user);
         return users.create(user);
     }
