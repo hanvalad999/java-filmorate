@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Film.
@@ -17,6 +19,7 @@ import java.time.LocalDate;
 @EqualsAndHashCode(of = "id")
 public class Film {
     private static final LocalDate EARLIEST_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+    private final Set<Long> likes = new HashSet<>();
 
     private Long id;
 

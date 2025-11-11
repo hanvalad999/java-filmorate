@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.model;
 
-
+import java.util.HashSet;
+import java.util.Set;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -38,5 +39,6 @@ public class User {
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 
+    private final Set<Long> friends = new HashSet<>();
 
 }
