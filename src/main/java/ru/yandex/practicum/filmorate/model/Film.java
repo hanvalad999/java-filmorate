@@ -6,10 +6,8 @@ import lombok.*;
 import java.time.LocalDate; // ← добавь
 import java.util.Set;                                // ← добавь
 
-@Getter
-@Setter
-@ToString
-@EqualsAndHashCode(of = "id")
+@Data
+@Builder
 public class Film {
     private int id;
     @NotBlank
