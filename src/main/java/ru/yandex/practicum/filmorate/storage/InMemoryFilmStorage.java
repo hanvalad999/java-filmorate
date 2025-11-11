@@ -58,13 +58,22 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     private void filmValidation(Film film) throws ValidationException {
-        if (film.getReleaseDate().isBefore(LocalDate.parse("1895-12-28"))
-                || film.getReleaseDate().isAfter(LocalDate.now())) {
-            throw new ValidationException("Некорректно указана дата релиза.");
-        } if (film.getName().isEmpty()) {
+        if (film == null) {
+            throw new ValidationException("Тело запроса не должно быть пустым");
+        }
+
+        if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Некорректно указано название фильма.");
-        } if (film.getDescription().length() > 200) {
+        }
+
+        if (film.getDescription() != null && film.getDescription().length() > 200) {
             throw new ValidationException("Превышено количество символов в описании фильма.");
         }
+
+        if (film.getReleaseDate() == null ||
+                film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28)) ||
+                film.getReleaseDate().isAfter(LocalDate.now())) {
+            throw new ValidationException("Некорректно указана дата релиза.");
+        }
     }
-}
+
