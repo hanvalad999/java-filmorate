@@ -75,6 +75,7 @@ public class UserService {
                 .toList();
     }
 
+    // --- VALIDATION ---
     private void validateAndNormalize(User u) {
         if (u == null) {
             throw new ValidationException("User body must not be null");
