@@ -66,6 +66,7 @@ public class UserService {
                 .map(this::getUserById)   // friends хранит id (Integer)
                 .toList();
     }
+
     // /users/{id}/friends/common/{otherId}
     public List<User> getMutualFriends(int id, int otherId) {
         Set<Integer> common = new HashSet<>(getUserById(id).getFriends());
