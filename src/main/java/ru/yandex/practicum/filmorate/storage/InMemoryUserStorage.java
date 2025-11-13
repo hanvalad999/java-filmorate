@@ -55,10 +55,12 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public List<User> getFriendsByUserId(Integer id) {
-        return findAllUsers().stream()
-                .filter(user -> user.getFriends().contains(id))
-                .collect(Collectors.toList());
+        User user = getUserById(id); // если нет пользователя → NotFoundException → 404
+        return user.getFriends().stream()
+                .map(this::getUserById)
+                .toList();
     }
+
 
     @Override
     public List<User> getMutualFriends(Integer userId, Integer otherId) {
@@ -87,15 +89,21 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User addFriend(Integer userId, Integer friendId) {
-        getUserById(userId).getFriends().add(friendId);
-        getUserById(friendId).getFriends().add(userId);
-        return getUserById(userId);
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId);
+
+        return user;
     }
 
     @Override
-    public User deleteFriend(Integer userId, Integer friendId) {
-        getUserById(userId).getFriends().remove(friendId);
-        getUserById(friendId).getFriends().remove(userId);
-        return getUserById(userId);
+    public void deleteFriend(Integer userId, Integer friendId) {
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
     }
 }

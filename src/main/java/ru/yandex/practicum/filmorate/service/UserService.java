@@ -29,19 +29,14 @@ public class UserService {
     public User create(User user) {
         validateAndNormalize(user);
         log.info("Создание пользователя: {}", user);
-        User created = users.create(user);
-        log.info("Пользователь создан: id={}", created.getId());
-        return created;
+        return users.create(user);
     }
 
     public User update(User user) {
         validateAndNormalize(user);
         log.info("Обновление пользователя: id={}", user.getId());
-        // проверка существования — если нет, storage должен кинуть NotFoundException
-        users.getUserById(user.getId());
-        User updated = users.update(user);
-        log.info("Пользователь обновлён: id={}", updated.getId());
-        return updated;
+        users.getUserById(user.getId()); // проверка существования
+        return users.update(user);
     }
 
     public User getUserById(int id) {
@@ -49,51 +44,43 @@ public class UserService {
         return users.getUserById(id);
     }
 
-    // --- FRIENDSHIP LOGIC ---
+    // --- дружба ---
 
     public User addFriend(int id, int friendId) {
         log.info("Добавление в друзья: userId={}, friendId={}", id, friendId);
-        User result = users.addFriend(id, friendId);
-        log.info("Пользователи подружились: userId={}, friendId={}", id, friendId);
-        return result;
+        return users.addFriend(id, friendId);
     }
 
     public void deleteFriend(int id, int friendId) {
         log.info("Удаление из друзей: userId={}, friendId={}", id, friendId);
         users.deleteFriend(id, friendId);
-        log.info("Пользователи больше не друзья: userId={}, friendId={}", id, friendId);
     }
 
-    // /users/{id}/friends
     public List<User> getUserFriends(int id) {
         log.info("Запрошен список друзей пользователя id={}", id);
+        // важно: если пользователя нет, storage должен кинуть NotFoundException → будет 404
         return users.getFriendsByUserId(id);
     }
 
-    // /users/{id}/friends/common/{otherId}
     public List<User> getMutualFriends(int id, int otherId) {
         log.info("Запрошен список общих друзей: userId={}, otherId={}", id, otherId);
         return users.getMutualFriends(id, otherId);
     }
 
-    // --- VALIDATION ---
+    // --- VALIDATION --- (как у тебя было)
     private void validateAndNormalize(User u) {
         if (u == null) {
             throw new ValidationException("User body must not be null");
         }
-
         if (u.getEmail() == null || u.getEmail().isBlank() || !u.getEmail().contains("@")) {
             throw new ValidationException("Некорректный email");
         }
-
         if (u.getLogin() == null || u.getLogin().isBlank() || u.getLogin().contains(" ")) {
             throw new ValidationException("Некорректный логин");
         }
-
         if (u.getName() == null || u.getName().isBlank()) {
             u.setName(u.getLogin());
         }
-
         if (u.getBirthday() == null || u.getBirthday().isAfter(LocalDate.now())) {
             throw new ValidationException("Некорректная дата рождения");
         }
