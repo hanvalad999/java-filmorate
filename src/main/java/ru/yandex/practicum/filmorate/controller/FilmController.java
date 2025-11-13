@@ -31,33 +31,34 @@ public class FilmController {
         return filmStorage.update(film);
     }
 
-    @PutMapping("/{id}/like/{filmId}")
-    public void like(@PathVariable String id, @PathVariable String filmId) {
+    // id — это id фильма, userId — id пользователя
+    @PutMapping("/{id}/like/{userId}")
+    public void like(@PathVariable int id, @PathVariable int userId) {
         log.info("Поступил запрос на присвоение лайка фильму.");
-        filmService.like(Integer.parseInt(id), Integer.parseInt(filmId));
+        filmService.like(id, userId);
     }
 
-    @GetMapping()
+    @GetMapping
     public List<Film> getFilms() {
         log.info("Поступил запрос на получение списка всех фильмов.");
         return filmStorage.findAllFilms();
     }
 
     @GetMapping("/{id}")
-    public Film getFilm(@PathVariable String id) {
+    public Film getFilm(@PathVariable int id) {
         log.info("Получен GET-запрос на получение фильма");
-        return filmStorage.getFilmById(Integer.parseInt(id));
+        return filmStorage.getFilmById(id);
     }
 
     @GetMapping("/popular")
-    public List<Film> getBestFilms(@RequestParam(defaultValue = "10") String count) {
+    public List<Film> getBestFilms(@RequestParam(defaultValue = "10") int count) {
         log.info("Поступил запрос на получение списка популярных фильмов.");
-        return filmService.getTopFilms(Integer.parseInt(count));
+        return filmService.getTopFilms(count);
     }
 
-    @DeleteMapping("/{id}/like/{filmId}")
-    public void deleteLike(@PathVariable String id, @PathVariable String filmId) {
+    @DeleteMapping("/{id}/like/{userId}")
+    public void deleteLike(@PathVariable int id, @PathVariable int userId) {
         log.info("Поступил запрос на удаление лайка у фильма.");
-        filmService.deleteLike(Integer.parseInt(filmId), Integer.parseInt(id));
+        filmService.deleteLike(id, userId);   // порядок: (filmId, userId)
     }
 }
