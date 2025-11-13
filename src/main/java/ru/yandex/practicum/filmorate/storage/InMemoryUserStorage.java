@@ -61,15 +61,18 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public List<User> getMutualFriends(Integer userId, Integer friendId) {
-        List<User> mutualFriends = new ArrayList<>();
-        for (Integer id :getUserById(userId).getFriends()) {
-            if (getUserById(friendId).getFriends().contains(id)) {
-                mutualFriends.add(getUserById(id));
-            }
-        }
-        return mutualFriends;
+    public List<User> getMutualFriends(Integer userId, Integer otherId) {
+        User user = getUserById(userId);
+        User other = getUserById(otherId);
+
+        Set<Integer> commonIds = new HashSet<>(user.getFriends());
+        commonIds.retainAll(other.getFriends());
+
+        return commonIds.stream()
+                .map(this::getUserById)
+                .toList();
     }
+
 
 
     private int getIdForUser() {

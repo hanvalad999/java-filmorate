@@ -75,5 +75,17 @@ public class InMemoryFilmStorage implements FilmStorage {
                 film.getReleaseDate().isAfter(LocalDate.now())) {
             throw new ValidationException("Некорректно указана дата релиза.");
         }
+
+        if (film.getDuration() <= 0) {
+            throw new ValidationException("Некорректно указана длительность фильма.");
+        }
+    }
+
+    @Override
+    public List<Film> findTopFilms(int count) {
+        return films.values().stream()
+                .sorted((f1, f2) -> f2.getLikes().size() - f1.getLikes().size())
+                .limit(count)
+                .toList();
     }
 }

@@ -7,9 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -21,59 +19,61 @@ public class UserService {
         this.users = users;
     }
 
+    // --- CRUD ---
+
     public List<User> findAllUsers() {
+        log.info("Запрошен список всех пользователей");
         return users.findAllUsers();
     }
 
     public User create(User user) {
         validateAndNormalize(user);
-        return users.create(user);
+        log.info("Создание пользователя: {}", user);
+        User created = users.create(user);
+        log.info("Пользователь создан: id={}", created.getId());
+        return created;
     }
 
     public User update(User user) {
         validateAndNormalize(user);
-        users.getUserById(user.getId()); // проверка существования
-        return users.update(user);
+        log.info("Обновление пользователя: id={}", user.getId());
+        // проверка существования — если нет, storage должен кинуть NotFoundException
+        users.getUserById(user.getId());
+        User updated = users.update(user);
+        log.info("Пользователь обновлён: id={}", updated.getId());
+        return updated;
     }
 
     public User getUserById(int id) {
+        log.info("Запрошен пользователь по id={}", id);
         return users.getUserById(id);
     }
 
     // --- FRIENDSHIP LOGIC ---
+
     public User addFriend(int id, int friendId) {
-        User user = getUserById(id);
-        User friend = getUserById(friendId);
-
-        user.getFriends().add(friendId);
-        friend.getFriends().add(id);
-
-        return user;
+        log.info("Добавление в друзья: userId={}, friendId={}", id, friendId);
+        User result = users.addFriend(id, friendId);
+        log.info("Пользователи подружились: userId={}, friendId={}", id, friendId);
+        return result;
     }
 
     public void deleteFriend(int id, int friendId) {
-        User user = getUserById(id);
-        User friend = getUserById(friendId);
-
-        user.getFriends().remove(friendId);
-        friend.getFriends().remove(id);
+        log.info("Удаление из друзей: userId={}, friendId={}", id, friendId);
+        users.deleteFriend(id, friendId);
+        log.info("Пользователи больше не друзья: userId={}, friendId={}", id, friendId);
     }
 
     // /users/{id}/friends
     public List<User> getUserFriends(int id) {
-        User user = getUserById(id);
-        return user.getFriends().stream()
-                .map(this::getUserById)   // friends хранит id (Integer)
-                .toList();
+        log.info("Запрошен список друзей пользователя id={}", id);
+        return users.getFriendsByUserId(id);
     }
 
     // /users/{id}/friends/common/{otherId}
     public List<User> getMutualFriends(int id, int otherId) {
-        Set<Integer> common = new HashSet<>(getUserById(id).getFriends());
-        common.retainAll(getUserById(otherId).getFriends());
-        return common.stream()
-                .map(this::getUserById)
-                .toList();
+        log.info("Запрошен список общих друзей: userId={}, otherId={}", id, otherId);
+        return users.getMutualFriends(id, otherId);
     }
 
     // --- VALIDATION ---

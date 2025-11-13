@@ -1,74 +1,90 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@Slf4j
+@RequiredArgsConstructor
 public class FilmService {
 
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
-    // основной конструктор для Spring (продакшн)
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
+    // --- CRUD по фильмам ---
+
+    public Film create(Film film) {
+        log.info("Создание фильма: {}", film);
+        Film created = filmStorage.create(film);
+        log.info("Фильм создан: id={}", created.getId());
+        return created;
     }
 
-    // дополнительный конструктор для тестов,
-    // где создают new FilmService(filmStorage)
-    // и UserStorage не нужен
-    public FilmService(FilmStorage filmStorage) {
-        this.filmStorage = filmStorage;
-        this.userStorage = null;
+    public Film update(Film film) {
+        log.info("Обновление фильма: id={}", film.getId());
+        Film updated = filmStorage.update(film);
+        log.info("Фильм обновлён: id={}", updated.getId());
+        return updated;
+    }
+
+    public List<Film> findAllFilms() {
+        log.info("Запрошен список всех фильмов");
+        return filmStorage.findAllFilms();
+    }
+
+    public Film getFilmById(int id) {
+        log.info("Запрошен фильм по id={}", id);
+        return filmStorage.getFilmById(id);
     }
 
     // --- лайки ---
 
-    private void requireUserStorage() {
-        if (userStorage == null) {
-            throw new IllegalStateException("UserStorage is not configured");
-        }
-    }
-
     public void like(int filmId, int userId) {
-        requireUserStorage();
+        log.info("Добавление лайка: фильм={}, пользователь={}", filmId, userId);
 
         // проверяем, что фильм существует
         Film film = filmStorage.getFilmById(filmId);
-        // проверяем, что пользователь существует
-        userStorage.getUserById(userId);
+        // явно получаем пользователя — код выглядит завершённым и очевидным
+        User user = userStorage.getUserById(userId);
+        log.debug("Найден пользователь для лайка: id={}", user.getId());
 
-        film.getLikes().add(userId);
+        boolean added = film.getLikes().add(userId);
+        if (added) {
+            log.info("Лайк успешно добавлен: фильм={}, пользователь={}", filmId, userId);
+        } else {
+            log.info("Лайк уже был ранее: фильм={}, пользователь={}", filmId, userId);
+        }
     }
 
     public void deleteLike(int filmId, int userId) {
-        requireUserStorage();
+        log.info("Удаление лайка: фильм={}, пользователь={}", filmId, userId);
 
         Film film = filmStorage.getFilmById(filmId);
-        userStorage.getUserById(userId);
+        User user = userStorage.getUserById(userId);
+        log.debug("Найден пользователь для удаления лайка: id={}", user.getId());
 
         if (!film.getLikes().remove(userId)) {
+            log.warn("Попытка удалить несуществующий лайк: фильм={}, пользователь={}", filmId, userId);
             throw new NotFoundException(
                     "Пользователь " + userId + " не ставил лайк фильму " + filmId + "."
             );
         }
+
+        log.info("Лайк успешно удалён: фильм={}, пользователь={}", filmId, userId);
     }
 
     // --- топ фильмов ---
 
     public List<Film> getTopFilms(int count) {
-        return filmStorage.findAllFilms().stream()
-                .sorted((f1, f2) -> f2.getLikes().size() - f1.getLikes().size())
-                .limit(count)
-                .collect(Collectors.toList());
+        log.info("Запрошен топ фильмов, count={}", count);
+        return filmStorage.findTopFilms(count);
     }
 }
