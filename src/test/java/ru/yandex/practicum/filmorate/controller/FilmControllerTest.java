@@ -1,8 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 
@@ -10,18 +16,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FilmControllerTest {
 
-    private final FilmController controller = new FilmController();
+    private FilmController controller;
 
     // helper: делаем строку любой длины
     private String repeatChar(char ch, int count) {
         return String.valueOf(ch).repeat(count);
     }
 
+    @BeforeEach
+    void init() {
+        FilmStorage filmStorage = new InMemoryFilmStorage();
+        UserStorage userStorage = new InMemoryUserStorage();
+        FilmService filmService = new FilmService(filmStorage, userStorage);
+        controller = new FilmController(filmService);
+    }
+
     @Test
     void createFilms_nullBody_shouldThrow() {
         assertThrows(
                 ValidationException.class,
-                () -> controller.createFilms(null),
+                () -> controller.create(null),
                 "Ожидалось, что null-тело не пройдёт"
         );
     }
@@ -36,7 +50,7 @@ class FilmControllerTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> controller.createFilms(film),
+                () -> controller.create(film),
                 "Ожидалось, что пустое название не пройдёт"
         );
     }
@@ -51,7 +65,7 @@ class FilmControllerTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> controller.createFilms(film),
+                () -> controller.create(film),
                 "Ожидалось, что описание >200 символов не пройдёт"
         );
     }
@@ -65,7 +79,7 @@ class FilmControllerTest {
         film.setDuration(120);
 
         assertDoesNotThrow(
-                () -> controller.createFilms(film),
+                () -> controller.create(film),
                 "Описание длиной 200 должно быть допустимо"
         );
     }
@@ -81,7 +95,7 @@ class FilmControllerTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> controller.createFilms(film),
+                () -> controller.create(film),
                 "Фильм слишком старый не должен пройти"
         );
     }
@@ -96,7 +110,7 @@ class FilmControllerTest {
         film.setDuration(1);
 
         assertDoesNotThrow(
-                () -> controller.createFilms(film),
+                () -> controller.create(film),
                 "Дата релиза = 28.12.1895 должна считаться валидной"
         );
     }
@@ -111,7 +125,7 @@ class FilmControllerTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> controller.createFilms(filmZero),
+                () -> controller.create(filmZero),
                 "Длительность 0 не должна проходить"
         );
 
@@ -123,7 +137,7 @@ class FilmControllerTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> controller.createFilms(filmNegative),
+                () -> controller.create(filmNegative),
                 "Отрицательная длительность не должна проходить"
         );
     }
@@ -136,10 +150,11 @@ class FilmControllerTest {
         film.setReleaseDate(LocalDate.of(2014, 11, 7));
         film.setDuration(169);
 
-        Film created = controller.createFilms(film);
+        Film created = controller.create(film);
 
         assertNotNull(created.getId(), "После сохранения у фильма должен быть id");
-        assertEquals(1L, created.getId(), "Первый добавленный фильм должен получить id=1");
+        // тут смотри на тип id в Film: если int — сравнивай с 1, а не 1L
+        assertEquals(1, created.getId(), "Первый добавленный фильм должен получить id=1");
         assertEquals("Interstellar", created.getName());
     }
 }
