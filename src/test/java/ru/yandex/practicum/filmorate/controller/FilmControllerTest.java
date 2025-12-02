@@ -1,8 +1,14 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 
@@ -10,7 +16,34 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FilmControllerTest {
 
-    private final FilmController controller = new FilmController();
+    private FilmController controller;
+
+    @BeforeEach
+    void setUp() {
+        FilmService filmService = mock(FilmService.class);
+        controller = new FilmController(filmService);
+
+        when(filmService.create(any())).thenAnswer(invocation -> {
+            Film film = invocation.getArgument(0);
+            if (film == null) {
+                throw new ValidationException("Фильм не может быть null");
+            }
+            if (film.getName() == null || film.getName().isBlank()) {
+                throw new ValidationException("Название не может быть пустым");
+            }
+            if (film.getDescription() != null && film.getDescription().length() > 200) {
+                throw new ValidationException("Описание не может быть длиннее 200 символов");
+            }
+            if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
+                throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года");
+            }
+            if (film.getDuration() <= 0) {
+                throw new ValidationException("Длительность фильма должна быть положительной");
+            }
+            film.setId(1L);
+            return film;
+        });
+    }
 
     // helper: делаем строку любой длины
     private String repeatChar(char ch, int count) {

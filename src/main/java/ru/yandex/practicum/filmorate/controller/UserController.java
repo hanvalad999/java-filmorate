@@ -1,75 +1,56 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
-@Slf4j
+@RequiredArgsConstructor
 public class UserController {
-    private final Map<Long, User> users = new ConcurrentHashMap<>();
+    private final UserService userService;
 
     @GetMapping
     public Collection<User> findUser() {
-        log.info("Получен запрос GET /users. Количество пользователей сейчас: {}", users.size());
-        return users.values();
+        return userService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public User findById(@PathVariable Long id) {
+        return userService.findById(id);
     }
 
     @PostMapping
     public User createUsers(@Valid @RequestBody User user) {
-        log.info("Попытка создать пользователя: {}", user);
-
-        normalize(user);
-        user.setId(getNextId());
-        users.put(user.getId(), user);
-
-        log.info("Пользователь успешно создан: id={}, name='{}'", user.getId(), user.getName());
-        return user;
+        return userService.create(user);
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
-        log.info("Попытка обновить пользователя: {}", user);
-
-        if (!existsUser(user)) {
-            log.warn("Обновление не удалось: пользователь с id={} не найден", user.getId());
-            throw new ValidationException("Пользователь с таким ID не найден для обновления");
-        }
-
-        normalize(user);
-        users.put(user.getId(), user);
-
-        log.info("Пользователь успешно обновлён: id={}, name='{}'", user.getId(), user.getName());
-        return user;
+        return userService.update(user);
     }
 
-    private boolean existsUser(User user) {
-        return user != null && user.getId() != null && users.containsKey(user.getId());
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.addFriend(id, friendId);
     }
 
-    private void normalize(User user) {
-        if (!StringUtils.hasText(user.getName())) {
-            user.setName(user.getLogin());
-        }
-
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFriend(@PathVariable Long id, @PathVariable Long friendId) {
+        userService.removeFriend(id, friendId);
     }
 
+    @GetMapping("/{id}/friends")
+    public Collection<User> getFriends(@PathVariable Long id) {
+        return userService.getFriends(id);
+    }
 
-
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return currentMaxId + 1;
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Collection<User> getCommonFriends(@PathVariable Long id, @PathVariable Long otherId) {
+        return userService.getCommonFriends(id, otherId);
     }
 }

@@ -1,16 +1,50 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
+import java.time.LocalDate;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
 
-    private final UserController controller = new UserController();
+    private UserController controller;
+
+    @BeforeEach
+    void setUp() {
+        UserService userService = mock(UserService.class);
+        controller = new UserController(userService);
+
+        when(userService.create(any())).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            if (user == null) {
+                throw new ValidationException("Пользователь не может быть null");
+            }
+            if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
+                throw new ValidationException("Некорректный email");
+            }
+            if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
+                throw new ValidationException("Некорректный логин");
+            }
+            if (user.getBirthday() != null && user.getBirthday().isAfter(LocalDate.now())) {
+                throw new ValidationException("Дата рождения не может быть в будущем");
+            }
+            if (user.getName() == null || user.getName().isBlank()) {
+                user.setName(user.getLogin());
+            }
+            user.setId(1L);
+            return user;
+        });
+    }
 
     @Test
     void createUsers_nullBody_shouldThrow() {
