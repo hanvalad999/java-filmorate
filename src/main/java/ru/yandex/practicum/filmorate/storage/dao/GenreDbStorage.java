@@ -40,4 +40,17 @@ public class GenreDbStorage implements GenreStorage {
     private Genre mapRowToGenre(ResultSet rs, int rowNum) throws SQLException {
         return new Genre(rs.getInt("id"), rs.getString("name"));
     }
+
+    @Override
+    public Set<Genre> findByIds(Set<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Set.of();
+        }
+
+        String inSql = String.join(",", ids.stream().map(id -> "?").toList());
+
+        String sql = "SELECT id, name FROM genres WHERE id IN (" + inSql + ")";
+
+        return new LinkedHashSet<>(jdbcTemplate.query(sql, ids.toArray(), this::mapRowToGenre));
+    }
 }

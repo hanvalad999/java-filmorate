@@ -12,4 +12,6 @@ public interface GenreStorage {
     Optional<Genre> findById(int id);
 
     Set<Genre> findByFilmId(Long filmId);
+
+    Set<Genre> findByIds(Set<Integer> ids);
 }

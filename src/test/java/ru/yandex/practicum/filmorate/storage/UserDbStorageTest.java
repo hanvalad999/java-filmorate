@@ -26,10 +26,10 @@ class UserDbStorageTest {
         User user = buildUser("user@mail.com", "login", "User Name");
         User saved = userStorage.create(user);
 
-        Optional<User> found = userStorage.findById(saved.getId());
+        User found = userStorage.findById(saved.getId())
+                .orElseThrow(() -> new AssertionError("User not found"));
 
-        assertThat(found).isPresent();
-        assertThat(found.get().getEmail()).isEqualTo("user@mail.com");
+        assertThat(found.getEmail()).isEqualTo("user@mail.com");
     }
 
     @Test
