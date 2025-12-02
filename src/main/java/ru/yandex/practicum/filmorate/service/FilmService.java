@@ -75,17 +75,32 @@ public class FilmService {
     }
 
     private void enrichFilm(Film film) {
+        // 1. Проверяем и подтягиваем MPA из БД
         Mpa mpa = mpaStorage.findById(film.getMpa().getId())
                 .orElseThrow(() -> new NotFoundException("Рейтинг не найден"));
         film.setMpa(mpa);
 
-        Set<Genre> genres = Optional.ofNullable(film.getGenres()).orElseGet(LinkedHashSet::new);
-        Set<Genre> resolvedGenres = genres.stream()
+        // 2. Проверяем жанры
+        Set<Genre> genresFromRequest = Optional.ofNullable(film.getGenres())
+                .orElseGet(LinkedHashSet::new);
+
+        if (genresFromRequest.isEmpty()) {
+            film.setGenres(new LinkedHashSet<>());
+            return;
+        }
+
+        // если жанр не найден — кидаем 404
+        Set<Genre> resolvedGenres = new LinkedHashSet<>();
+        genresFromRequest.stream()
                 .map(Genre::getId)
-                .map(genreStorage::findById)
-                .flatMap(Optional::stream)
-                .sorted(Comparator.comparingInt(Genre::getId))
-                .collect(LinkedHashSet::new, LinkedHashSet::add, LinkedHashSet::addAll);
+                .sorted() // чтобы был стабильный порядок по id
+                .forEach(id -> {
+                    Genre genre = genreStorage.findById(id)
+                            .orElseThrow(() -> new NotFoundException("Жанр не найден: id=" + id));
+                    resolvedGenres.add(genre); // LinkedHashSet сам уберёт дубли
+                });
+
         film.setGenres(resolvedGenres);
     }
+
 }
