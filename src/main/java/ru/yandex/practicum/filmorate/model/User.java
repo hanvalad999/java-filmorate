@@ -12,6 +12,8 @@ import lombok.ToString;
 
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User.
@@ -31,12 +33,12 @@ public class User {
     @NotBlank(message = "Логин не может быть пустым или содержать пробелы")
     private String login;
 
-    @NotBlank(message = "Имя не может быть пустым")
     private String name;
 
     @NotNull(message = "Дата рождения обязательна")
     @PastOrPresent(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 
+    private Set<Long> friends = new HashSet<>();
 
 }

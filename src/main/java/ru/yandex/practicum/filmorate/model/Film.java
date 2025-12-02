@@ -2,11 +2,17 @@ package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Film.
@@ -26,13 +32,17 @@ public class Film {
     @Size(max = 200, message = "Описание не может превышать 200 символов")
     private String description;
 
-    @NotBlank(message = "Валидация не пройдена: не указана дата релиза")
+    @NotNull(message = "Валидация не пройдена: не указана дата релиза")
     private LocalDate releaseDate;
 
     @Positive(message = "Продолжительность должна быть положительным числом")
     private int duration;
 
-    // 👇 собственная проверка на “не раньше 28 декабря 1895”
+    @NotNull(message = "Рейтинг обязателен")
+    private Mpa mpa;
+
+    private Set<Genre> genres = new LinkedHashSet<>();
+
     @AssertTrue(message = "Дата релиза не может быть раньше 28 декабря 1895 года")
     public boolean isReleaseDateValid() {
         return releaseDate == null || !releaseDate.isBefore(EARLIEST_RELEASE_DATE);
